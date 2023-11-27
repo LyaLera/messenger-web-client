@@ -1,4 +1,4 @@
-import {  createContext, useState } from "react"
+import {  createContext, useState, useEffect } from "react"
 
 export const ConversationContext = createContext(null)
 
@@ -8,10 +8,16 @@ export default function ConversationProvider({children}) {
         {id: 2, name: "conversation 2"}
     ])
     const [selectedConversationId, setSelectedConversationId] = useState(null)
+    const [currentConversation, setCurrentConversation] = useState(null)
 
-
+    // computed value
+    useEffect(() => {
+        setCurrentConversation(conversations.find((conversation) => conversation.id === selectedConversationId))
+    }, [conversations, selectedConversationId])
     return (
-        <ConversationContext.Provider value={{conversations, setConversations, selectedConversationId, setSelectedConversationId}}>
+        <ConversationContext.Provider value={{conversations, setConversations, 
+        selectedConversationId, setSelectedConversationId, 
+        currentConversation}}>
             {children}
         </ConversationContext.Provider>
     )
