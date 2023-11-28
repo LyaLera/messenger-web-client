@@ -11,5 +11,5 @@ export default function ConversationDetail() {
         <div>Select a cnversation to get started</div>
       )}
     </div>
-  );
+  ); 
 }
