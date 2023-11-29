@@ -5,7 +5,7 @@ import ConversationInputForm from "./ConversationInputForm";
 export default function ConversationDetail() {
   const { currentConversation, deleteMessage } = useContext(ConversationContext);
   return (
-    <div className="h-[calc(100vh-80px)] bg-blue-300 w-full">
+    <div className="bg-blue-300">
       {currentConversation ? (
         <>
         <div>{currentConversation.name}</div>
@@ -20,7 +20,7 @@ export default function ConversationDetail() {
         <ConversationInputForm />
         </>
       ) : (
-        <div>Select a cnversation to get started</div>
+        <div>Select a conversation to get started</div>
       )}
     </div>
   ); 

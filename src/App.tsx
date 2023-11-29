@@ -1,17 +1,20 @@
-import ConversationDetail from "./components/ConversationDetail"
-import ConversationList from "./components/ConversationList"
+import Conversation from "./Conversation"
 import Navbar from "./components/Navbar"
+import Login from "./Login"
+import { Routes, Route } from "react-router-dom"
 
 function App() {
 
   return (
-      <div className="w-screen h-screen bg-slate-200 max-h-screen flex flex-col">
-      <Navbar/>
-      <div className="flex">
-        <ConversationList />
-        <ConversationDetail />
-      </div>
-    </div>
+    <Routes>
+      <Route path="/" element={<Login />}/>
+        {/* <div className="w-screen h-screen bg-slate-200 max-h-screen flex flex-col"> */}
+        <Route path="/conversations/:id?" element={[<Navbar/>, <Conversation />]}/>
+        {/* <Route path="/conversations/:id?" element={<ConversationDetail/>}/> */}
+        {/* <div className="flex"> */}
+        {/* </div>
+      </div> */}
+    </Routes>
   )
 }
 

@@ -17,7 +17,7 @@ interface ConversationI {
 interface ConversationContextI {
   conversations: Array<ConversationI>;
   setConversations: (conversation: ConversationI[]) => void;
-  selectedConversationId: string | null;
+  selectedConversationId: string | undefined;
   setSelectedConversationId: (id: string) => void;
   currentConversation: ConversationI | null;
   addMessage: (body: string) => void;
@@ -70,13 +70,16 @@ export default function ConversationContextProvider({
     },
   ]);
   const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(null);
+    string | undefined
+  >("");
   const [currentConversation, setCurrentConversation] =
     useState<ConversationI | null>(null);
 
   // computed value
   useEffect(() => {
+    const fullUrl = window.location.href;
+    const id = fullUrl.split("/").pop();
+    setSelectedConversationId(id);
     const foundConversation: ConversationI | undefined = conversations.find(
       (conversation) => conversation.id === selectedConversationId
     );
@@ -134,4 +137,3 @@ export default function ConversationContextProvider({
     setConversations(updatedConversations);
   }
 }
-
