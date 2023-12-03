@@ -14,7 +14,7 @@ export default function ConversationInputForm() {
     addMessage(message);
     setMessage("");
   }
-
+  console.log(message)
   return (
     <form onSubmit={handleSubmit}>
       <input
@@ -23,7 +23,7 @@ export default function ConversationInputForm() {
         value={message}
         onChange={handleChange}
       />
-      <button type="submit">Send Message</button>
+      <button className="pl-1" type="submit">Send Message</button>
     </form>
   );
 }

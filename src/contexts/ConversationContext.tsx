@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, ReactNode } from "react";
+import  { nanoid }  from 'nanoid'
 
 interface MessageI {
   id: string;
@@ -47,7 +48,7 @@ export default function ConversationContextProvider({
       name: "conversation 1",
       messages: [
         {
-          id: "000",
+          id: nanoid(),
           body: "hey this is a message from chris in conversation 1",
           createdAt: new Date(),
           authorId: "5",
@@ -60,7 +61,7 @@ export default function ConversationContextProvider({
       name: "conversation 2",
       messages: [
         {
-          id: "001",
+          id: nanoid(),
           body: "hey this is a message from chris in conversation 2",
           createdAt: new Date(),
           authorId: "5",
@@ -106,7 +107,7 @@ export default function ConversationContextProvider({
 
   function addMessage(body: string) {
     let newMessage: MessageI = {
-      id: "002",
+      id: nanoid(),
       body: body,
       createdAt: new Date(),
       authorId: "author1",

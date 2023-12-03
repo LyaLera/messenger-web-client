@@ -8,12 +8,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />}/>
-        {/* <div className="w-screen h-screen bg-slate-200 max-h-screen flex flex-col"> */}
-        <Route path="/conversations/:id?" element={[<Navbar/>, <Conversation />]}/>
-        {/* <Route path="/conversations/:id?" element={<ConversationDetail/>}/> */}
-        {/* <div className="flex"> */}
-        {/* </div>
-      </div> */}
+      <Route path="/conversations/:id?" element={[<Navbar/>, <Conversation />]}/>
     </Routes>
   )
 }
