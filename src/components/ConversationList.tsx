@@ -7,7 +7,7 @@ export default function ConversationList() {
   const [search, setSearch] = useState("")
 
   const filteredConversation = conversations.filter((conversation) =>
-  conversation.name.toLowerCase().includes(search))
+  conversation.topic.toLowerCase().includes(search))
 
   const conversationsToDisplay = search ? filteredConversation : conversations
 
@@ -26,7 +26,6 @@ export default function ConversationList() {
           <div
             key={conversation.id}
             onClick={() => {
-              history.pushState(null, "", "/conversations/" + conversation.id);
               setSelectedConversationId(conversation.id);
             }}
             className={
@@ -35,7 +34,7 @@ export default function ConversationList() {
                 : "bg-orange-300 p-2"
             }
           >
-            {conversation.name}
+            {conversation.topic}
           </div>
       ))}
     </div>

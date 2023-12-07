@@ -1,6 +1,6 @@
-import Conversation from "./Conversation"
+import Conversation from "./components/Conversation"
 import Navbar from "./components/Navbar"
-import Login from "./Login"
+import Login from "./components/Login"
 import { Routes, Route } from "react-router-dom"
 
 function App() {

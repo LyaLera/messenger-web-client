@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { ConversationContext } from "../contexts/ConversationContext";
 
 export default function ConversationInputForm() {
-  const { addMessage } = useContext(ConversationContext);
+  const { addMessage, currentConversation } = useContext(ConversationContext);
   const [message, setMessage] = useState<string>("");
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -11,7 +11,8 @@ export default function ConversationInputForm() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    addMessage(message);
+    currentConversation &&
+    addMessage(message, currentConversation.id, "2");
     setMessage("");
   }
   console.log(message)

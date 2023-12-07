@@ -1,5 +1,5 @@
-import ConversationDetail from "./components/ConversationDetail";
-import ConversationList from "./components/ConversationList";
+import ConversationDetail from "./ConversationDetail";
+import ConversationList from "./ConversationList";
 
 export default function Conversation() {
     return (

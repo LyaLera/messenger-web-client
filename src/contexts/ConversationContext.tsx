@@ -1,18 +1,21 @@
+import { nanoid } from "nanoid";
 import { createContext, useState, useEffect, ReactNode } from "react";
-import  { nanoid }  from 'nanoid'
+
 
 interface MessageI {
   id: string;
-  body: string;
-  createdAt: Date;
-  authorId: string;
-  conversationId: string;
+  content: string;
+  created_at: Date;
+  updated_at: Date;
+  user_id: string;
+  conversation_id: string;
 }
 
 interface ConversationI {
+  created_at: Date;
   id: string;
-  name: string;
-  messages: [MessageI];
+  topic: string;
+  updated_at: Date;
 }
 
 interface ConversationContextI {
@@ -21,18 +24,22 @@ interface ConversationContextI {
   selectedConversationId: string | undefined;
   setSelectedConversationId: (id: string) => void;
   currentConversation: ConversationI | null;
-  addMessage: (body: string) => void;
-  deleteMessage: (id: string) => void;
+  messages: Array<MessageI>;
+  setMessages:(message: MessageI[]) => void;
+  addMessage: (content: string, conversationsId: string, userId: string) => void;
+  // deleteMessage: (id: string) => void;
 }
 
 const defaultContextData: ConversationContextI = {
   currentConversation: {} as ConversationI,
   conversations: [] as Array<ConversationI>,
   setConversations: () => {},
+  messages: [] as Array<MessageI>,
+  setMessages: () => {},
   selectedConversationId: "",
   setSelectedConversationId: () => {},
   addMessage: () => {},
-  deleteMessage: () => {},
+  // deleteMessage: () => {},
 };
 export const ConversationContext =
   createContext<ConversationContextI>(defaultContextData);
@@ -42,52 +49,91 @@ export default function ConversationContextProvider({
 }: {
   children: ReactNode;
 }) {
-  const [conversations, setConversations] = useState<Array<ConversationI>>([
-    {
-      id: "1",
-      name: "conversation 1",
-      messages: [
-        {
-          id: nanoid(),
-          body: "hey this is a message from chris in conversation 1",
-          createdAt: new Date(),
-          authorId: "5",
-          conversationId: "1",
-        },
-      ],
-    },
-    {
-      id: "2",
-      name: "conversation 2",
-      messages: [
-        {
-          id: nanoid(),
-          body: "hey this is a message from chris in conversation 2",
-          createdAt: new Date(),
-          authorId: "5",
-          conversationId: "2",
-        },
-      ],
-    },
-  ]);
+  const [conversations, setConversations] = useState<Array<ConversationI>>([]);
+  const [messages, setMessages] = useState<Array<MessageI>>([])
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | undefined
   >("");
   const [currentConversation, setCurrentConversation] =
     useState<ConversationI | null>(null);
+    
+    // when the page loads, we want to read the URL and get conversationId, if there is one
+    useEffect(()=>{
+      if(!selectedConversationId) {
+        const fullUrl = window.location.href;
+       const id = fullUrl.split("/").pop();
+       setSelectedConversationId(id);
+     }
+    },[])
 
-  // computed value
-  useEffect(() => {
-    const fullUrl = window.location.href;
-    const id = fullUrl.split("/").pop();
-    setSelectedConversationId(id);
-    const foundConversation: ConversationI | undefined = conversations.find(
-      (conversation) => conversation.id === selectedConversationId
-    );
-    if (foundConversation?.id) {
-      setCurrentConversation(foundConversation);
+    useEffect(() => {
+      // when the user changes the selectedConversationId, we want update id in the URL
+      history.pushState(null, "", "/conversations/" + selectedConversationId);
+      if(selectedConversationId !== undefined) {
+        // when the user changes the selectedConversationId, we want request messages for that conversation
+        fetchMessages(selectedConversationId)
+
+        // when the user changes the selectedConversationId, we want set "currentConversation"
+        const foundConversation: ConversationI | undefined = conversations.find(
+          (conversation) => conversation.id == selectedConversationId
+        );
+
+        if (foundConversation?.id) {
+          setCurrentConversation(foundConversation);
+        }
+
+      } else {
+        setMessages([])
+        setCurrentConversation(null)
+      } 
+      // without "waiting" for conversations http response to arrive, we have created a "race condition"
+      // where we try to select the "currentConversation" before we have received *any* conversations
+    }, [conversations, selectedConversationId])
+
+
+  const fetchConversations = async () => {
+    try {
+      let response = await fetch(
+        'http://localhost:3304/conversations'
+      );
+      let data = await response.json();
+      let conversationsFromServer = data;
+      setConversations(conversationsFromServer);
+    } catch (error) {
+      console.log(error);
     }
-  }, [conversations, selectedConversationId]);
+  };
+
+  useEffect(() => {
+    fetchConversations();
+  }, []);
+
+  const fetchMessages = async (conversation_id: string) => {
+    try {
+      let response = await fetch(
+        'http://localhost:3304/messages/conversation/' + conversation_id
+      );
+      let data = await response.json();
+      let messagesFromServer = data;
+      console.log(data)
+      setMessages(messagesFromServer);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  function addMessage(content: string, conversationId: string, userId: string) {
+    if(selectedConversationId) {
+    let newMessege = {
+      id: nanoid(),
+      content: content,
+      created_at: new Date,
+      updated_at: new Date,
+      user_id: userId,
+      conversation_id: conversationId,
+    }
+    setMessages([...messages, newMessege])
+  }}
 
   return (
     <ConversationContext.Provider
@@ -97,44 +143,13 @@ export default function ConversationContextProvider({
         selectedConversationId,
         setSelectedConversationId,
         currentConversation,
-        addMessage,
-        deleteMessage,
+        messages,
+        setMessages,
+        addMessage
+        // deleteMessage
       }}
     >
       {children}
     </ConversationContext.Provider>
   );
-
-  function addMessage(body: string) {
-    let newMessage: MessageI = {
-      id: nanoid(),
-      body: body,
-      createdAt: new Date(),
-      authorId: "author1",
-      conversationId: "2",
-    };
-    const updatedConversations = [...conversations];
-    updatedConversations.forEach((conversation) => {
-      if (conversation.id === selectedConversationId) {
-        conversation.messages.push(newMessage);
-      }
-    });
-    console.log(updatedConversations);
-    setConversations(updatedConversations);
-  }
-
-  function deleteMessage(id: string) {
-    const updatedConversations = [...conversations];
-    updatedConversations.forEach((conversation) => {
-      if (conversation.id === selectedConversationId) {
-        for (let i = 0; i < conversation.messages.length; i++) {
-          if (conversation.messages[i].id === id) {
-            conversation.messages.splice(i, 1);
-          }
-        }
-      }
-    });
-    console.log(updatedConversations);
-    setConversations(updatedConversations);
-  }
 }
