@@ -5,9 +5,9 @@ import { createContext, useState, useEffect, ReactNode } from "react";
 interface MessageI {
   id: string;
   content: string;
-  created_at: Date;
-  updated_at: Date;
-  user_id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
   conversation_id: string;
 }
 
@@ -26,7 +26,7 @@ interface ConversationContextI {
   currentConversation: ConversationI | null;
   messages: Array<MessageI>;
   setMessages:(message: MessageI[]) => void;
-  addMessage: (content: string, conversationsId: string, userId: string) => void;
+  addMessage: (content: string, conversationsId: string, userId: number) => void;
   // deleteMessage: (id: string) => void;
 }
 
@@ -122,17 +122,42 @@ export default function ConversationContextProvider({
     }
   };
 
-  function addMessage(content: string, conversationId: string, userId: string) {
+  const postMessage = async (newMessage : MessageI) => {
+    try {
+      let response = await fetch(
+        'http://localhost:3304/messages',
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newMessage),
+        }
+      );
+      if (response.status === 201) {
+        // notify();
+        console.log("Message was successfully added to db");
+      } else {
+        let error = new Error("Could not add message to db");
+        throw error;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  function addMessage(content: string, conversationId: string, userId: number) {
     if(selectedConversationId) {
+      let date = new Date()
     let newMessege = {
       id: nanoid(),
       content: content,
-      created_at: new Date,
-      updated_at: new Date,
+      created_at: date.toISOString(),
+      updated_at: date.toISOString(),
       user_id: userId,
       conversation_id: conversationId,
     }
+    console.log(newMessege)
     setMessages([...messages, newMessege])
+    postMessage(newMessege)
   }}
 
   return (

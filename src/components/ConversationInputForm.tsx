@@ -12,7 +12,7 @@ export default function ConversationInputForm() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     currentConversation &&
-    addMessage(message, currentConversation.id, "2");
+    addMessage(message, currentConversation.id, 2);
     setMessage("");
   }
   console.log(message)
