@@ -17,3 +17,7 @@
     display: grid;
     grid-template-rows: 30px auto 40px;
 }
+
+.message-content {
+    display: inline;
+}

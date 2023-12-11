@@ -1,24 +1,24 @@
-import { nanoid } from "nanoid";
+// import { v4 as uuidv4 } from 'uuid';
 import { createContext, useState, useEffect, ReactNode } from "react";
 
 
-interface MessageI {
+export interface MessageI {
   id: string;
   content: string;
   created_at: string;
   updated_at: string;
-  user_id: number;
+  user_id: string;
   conversation_id: string;
 }
 
-interface ConversationI {
-  created_at: Date;
+export interface ConversationI {
+  created_at: string;
   id: string;
   topic: string;
-  updated_at: Date;
+  updated_at: string;
 }
 
-interface ConversationContextI {
+export interface ConversationContextI {
   conversations: Array<ConversationI>;
   setConversations: (conversation: ConversationI[]) => void;
   selectedConversationId: string | undefined;
@@ -26,8 +26,10 @@ interface ConversationContextI {
   currentConversation: ConversationI | null;
   messages: Array<MessageI>;
   setMessages:(message: MessageI[]) => void;
-  addMessage: (content: string, conversationsId: string, userId: number) => void;
-  // deleteMessage: (id: string) => void;
+  addMessage: (content: string, conversationsId: string) => void;
+  deleteMessage: (id: string) => void;
+  updateMessage: (message: MessageI) => void;
+  userId: string
 }
 
 const defaultContextData: ConversationContextI = {
@@ -39,7 +41,9 @@ const defaultContextData: ConversationContextI = {
   selectedConversationId: "",
   setSelectedConversationId: () => {},
   addMessage: () => {},
-  // deleteMessage: () => {},
+  deleteMessage: () => {},
+  updateMessage: () => {},
+  userId: ""
 };
 export const ConversationContext =
   createContext<ConversationContextI>(defaultContextData);
@@ -56,6 +60,7 @@ export default function ConversationContextProvider({
   >("");
   const [currentConversation, setCurrentConversation] =
     useState<ConversationI | null>(null);
+  const userId = '863b1b4f-c440-41b0-9272-af610c9ce380'
     
     // when the page loads, we want to read the URL and get conversationId, if there is one
     useEffect(()=>{
@@ -122,7 +127,7 @@ export default function ConversationContextProvider({
     }
   };
 
-  const postMessage = async (newMessage : MessageI) => {
+  const postMessage = async (newMessage : {content: string, user_id: string, conversation_id: string}) => {
     try {
       let response = await fetch(
         'http://localhost:3304/messages',
@@ -132,9 +137,12 @@ export default function ConversationContextProvider({
           body: JSON.stringify(newMessage),
         }
       );
+      console.log(newMessage)
       if (response.status === 201) {
-        // notify();
         console.log("Message was successfully added to db");
+        const createdMessage = await response.json()
+        console.log("Response from server: ", createdMessage)
+        return createdMessage
       } else {
         let error = new Error("Could not add message to db");
         throw error;
@@ -144,21 +152,79 @@ export default function ConversationContextProvider({
     }
   };
 
-  function addMessage(content: string, conversationId: string, userId: number) {
+  async function addMessage(content: string, conversationId: string) {
     if(selectedConversationId) {
-      let date = new Date()
-    let newMessege = {
-      id: nanoid(),
+    let newMessage = {
       content: content,
-      created_at: date.toISOString(),
-      updated_at: date.toISOString(),
       user_id: userId,
       conversation_id: conversationId,
     }
-    console.log(newMessege)
-    setMessages([...messages, newMessege])
-    postMessage(newMessege)
+    //pessimistic - server will create id and date 
+    //optimistic - when we update React data before the server will say all is correct
+    const createdMessage = await postMessage(newMessage)
+    if(createdMessage) {
+      setMessages([...messages, createdMessage])
+    } else {
+      console.error("Error: createdMessage is undefined")
+    }
+    
   }}
+
+  const deleteMessageInServer = async (deleteId: string) => {
+    try {
+      let response = await fetch(
+        'http://localhost:3304/messages/' + deleteId,
+        {
+          method: "DELETE",
+        }
+      );
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  function deleteMessage(deletedId: string) {
+    if(selectedConversationId){
+      let filteredMessages = messages.filter((message) => 
+      message.id !== deletedId)
+      setMessages(filteredMessages)
+      deleteMessageInServer(deletedId)
+    }
+  }
+
+  const editMessageInServer = async (changedMessage: MessageI ) => {
+    try {
+      let response = await fetch('http://localhost:3304/messages/' + changedMessage.id,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(changedMessage),
+      }
+      )
+      if (response.status === 201) {
+        console.log("Message was successfully edited in a server");
+      } else {
+        let error = new Error("Could not edit message in a server");
+        throw error;
+      }
+    } catch(error) {
+      console.log(error);
+    }
+  }
+
+  function updateMessage(changedMessage: MessageI) {
+    setMessages(messages.map((message) => {
+      if(message.id === changedMessage.id) {
+        return changedMessage
+      } else {
+        return message
+      }
+    }))
+    editMessageInServer(changedMessage)
+  }
 
   return (
     <ConversationContext.Provider
@@ -170,8 +236,10 @@ export default function ConversationContextProvider({
         currentConversation,
         messages,
         setMessages,
-        addMessage
-        // deleteMessage
+        addMessage,
+        deleteMessage,
+        updateMessage,
+        userId,
       }}
     >
       {children}
