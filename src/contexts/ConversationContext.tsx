@@ -18,6 +18,13 @@ export interface ConversationI {
   updated_at: string;
 }
 
+export interface UserI {
+  name: string;
+  age: number;
+  id: string;
+  location: string;
+}
+
 export interface ConversationContextI {
   conversations: Array<ConversationI>;
   setConversations: (conversation: ConversationI[]) => void;
@@ -29,6 +36,8 @@ export interface ConversationContextI {
   addMessage: (content: string, conversationsId: string) => void;
   deleteMessage: (id: string) => void;
   updateMessage: (message: MessageI) => void;
+  users: Array<UserI>
+  setUsers: (user: UserI[]) => void;
   userId: string
 }
 
@@ -43,7 +52,9 @@ const defaultContextData: ConversationContextI = {
   addMessage: () => {},
   deleteMessage: () => {},
   updateMessage: () => {},
-  userId: ""
+  userId: "",
+  users: [] as Array<UserI>,
+  setUsers: () => {},
 };
 export const ConversationContext =
   createContext<ConversationContextI>(defaultContextData);
@@ -55,6 +66,7 @@ export default function ConversationContextProvider({
 }) {
   const [conversations, setConversations] = useState<Array<ConversationI>>([]);
   const [messages, setMessages] = useState<Array<MessageI>>([])
+  const [users, setUsers] = useState<Array<UserI>>([])
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | undefined
   >("");
@@ -113,7 +125,24 @@ export default function ConversationContextProvider({
     fetchConversations();
   }, []);
 
-  const fetchMessages = async (conversation_id: string) => {
+  const fetchUsers = async () => {
+    try {
+      let response = await fetch(
+        'http://localhost:3304/users');
+      let data = await response.json();
+      let usersFromServer = data;
+      console.log(data)
+      setUsers(usersFromServer);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchMessages = async (conversation_id: string | undefined) => {
     try {
       let response = await fetch(
         'http://localhost:3304/messages/conversation/' + conversation_id
@@ -127,7 +156,12 @@ export default function ConversationContextProvider({
     }
   };
 
+  // useEffect(() => {
+  //   fetchMessages(selectedConversationId);
+  // }, [messages]);
+
   const postMessage = async (newMessage : {content: string, user_id: string, conversation_id: string}) => {
+    console.log(JSON.stringify(newMessage))
     try {
       let response = await fetch(
         'http://localhost:3304/messages',
@@ -162,6 +196,7 @@ export default function ConversationContextProvider({
     //pessimistic - server will create id and date 
     //optimistic - when we update React data before the server will say all is correct
     const createdMessage = await postMessage(newMessage)
+    console.log("AHHHHHHH", createdMessage)
     if(createdMessage) {
       setMessages([...messages, createdMessage])
     } else {
@@ -240,6 +275,8 @@ export default function ConversationContextProvider({
         deleteMessage,
         updateMessage,
         userId,
+        users,
+        setUsers
       }}
     >
       {children}
