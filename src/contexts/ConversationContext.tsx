@@ -1,6 +1,4 @@
-// import { v4 as uuidv4 } from 'uuid';
 import { createContext, useState, useEffect, ReactNode } from "react";
-
 
 export interface MessageI {
   id: string;
@@ -25,6 +23,14 @@ export interface UserI {
   location: string;
 }
 
+export interface ParticipationEventsI {
+  id: string;
+  joined_at: string;
+  participant: boolean;
+  user_id: string;
+  conversation_id: string;
+}
+
 export interface ConversationContextI {
   conversations: Array<ConversationI>;
   setConversations: (conversation: ConversationI[]) => void;
@@ -36,9 +42,12 @@ export interface ConversationContextI {
   addMessage: (content: string, conversationsId: string) => void;
   deleteMessage: (id: string) => void;
   updateMessage: (message: MessageI) => void;
-  users: Array<UserI>
+  users: Array<UserI>;
   setUsers: (user: UserI[]) => void;
-  userId: string
+  participationEvents: Array<ParticipationEventsI>;
+  setParticipationEvents: (participationEvent: ParticipationEventsI[]) => void;
+  addParticipationEvent: (id: string, conversationsId: string) => void;
+  userId: string;
 }
 
 const defaultContextData: ConversationContextI = {
@@ -52,10 +61,14 @@ const defaultContextData: ConversationContextI = {
   addMessage: () => {},
   deleteMessage: () => {},
   updateMessage: () => {},
+  addParticipationEvent: () => {},
   userId: "",
   users: [] as Array<UserI>,
   setUsers: () => {},
+  participationEvents: [] as Array<ParticipationEventsI>,
+  setParticipationEvents: () => {},
 };
+
 export const ConversationContext =
   createContext<ConversationContextI>(defaultContextData);
 
@@ -67,6 +80,7 @@ export default function ConversationContextProvider({
   const [conversations, setConversations] = useState<Array<ConversationI>>([]);
   const [messages, setMessages] = useState<Array<MessageI>>([])
   const [users, setUsers] = useState<Array<UserI>>([])
+  const [participationEvents, setParticipationEvents] = useState<Array<ParticipationEventsI>>([])
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | undefined
   >("");
@@ -89,6 +103,7 @@ export default function ConversationContextProvider({
       if(selectedConversationId !== undefined) {
         // when the user changes the selectedConversationId, we want request messages for that conversation
         fetchMessages(selectedConversationId)
+        fetchParticipationEvents(selectedConversationId)
 
         // when the user changes the selectedConversationId, we want set "currentConversation"
         const foundConversation: ConversationI | undefined = conversations.find(
@@ -131,7 +146,6 @@ export default function ConversationContextProvider({
         'http://localhost:3304/users');
       let data = await response.json();
       let usersFromServer = data;
-      console.log(data)
       setUsers(usersFromServer);
     } catch (error) {
       console.log(error);
@@ -142,6 +156,18 @@ export default function ConversationContextProvider({
     fetchUsers();
   }, []);
 
+  const fetchParticipationEvents = async (conversation_id: string | undefined) => {
+    try {
+      let response = await fetch(
+        'http://localhost:3304/participation_events/conversation/' + conversation_id);
+      let data = await response.json();
+      let participationEventsFromServer = data;
+      setParticipationEvents(participationEventsFromServer);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const fetchMessages = async (conversation_id: string | undefined) => {
     try {
       let response = await fetch(
@@ -149,19 +175,13 @@ export default function ConversationContextProvider({
       );
       let data = await response.json();
       let messagesFromServer = data;
-      console.log(data)
       setMessages(messagesFromServer);
     } catch (error) {
       console.log(error);
     }
   };
 
-  // useEffect(() => {
-  //   fetchMessages(selectedConversationId);
-  // }, [messages]);
-
   const postMessage = async (newMessage : {content: string, user_id: string, conversation_id: string}) => {
-    console.log(JSON.stringify(newMessage))
     try {
       let response = await fetch(
         'http://localhost:3304/messages',
@@ -175,7 +195,6 @@ export default function ConversationContextProvider({
       if (response.status === 201) {
         console.log("Message was successfully added to db");
         const createdMessage = await response.json()
-        console.log("Response from server: ", createdMessage)
         return createdMessage
       } else {
         let error = new Error("Could not add message to db");
@@ -196,13 +215,50 @@ export default function ConversationContextProvider({
     //pessimistic - server will create id and date 
     //optimistic - when we update React data before the server will say all is correct
     const createdMessage = await postMessage(newMessage)
-    console.log("AHHHHHHH", createdMessage)
     if(createdMessage) {
       setMessages([...messages, createdMessage])
     } else {
       console.error("Error: createdMessage is undefined")
+    }  
+  }}
+
+  const postParticipationEvent = async (newPartEvent : {participant: boolean}) => {
+    try {
+      let response = await fetch(
+        'http://localhost:3304/participation_events',
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newPartEvent),
+        }
+      );
+      console.log(newPartEvent)
+      if (response.status === 201) {
+        console.log("Participation event was successfully added to db");
+        const createdPartEvent = await response.json()
+        return createdPartEvent
+      } else {
+        let error = new Error("Could not add participation event to db");
+        throw error;
+      }
+    } catch (error) {
+      console.log(error);
     }
-    
+  };
+
+  async function addParticipationEvent(id: string, conversationId: string) {
+    if(selectedConversationId && id === userId) {
+    let newPartEvent = {
+      participant: false,
+      user_id: userId,
+      conversation_id: conversationId
+    }
+    const createdPartEvent = await postParticipationEvent(newPartEvent)
+    if(createdPartEvent) {
+      setParticipationEvents([...participationEvents, createdPartEvent])
+    } else {
+      console.error("Error: createdPartEvent is undefined")
+    }  
   }}
 
   const deleteMessageInServer = async (deleteId: string) => {
@@ -213,7 +269,12 @@ export default function ConversationContextProvider({
           method: "DELETE",
         }
       );
-      console.log(response);
+      if (response.status === 201) {
+        console.log("Message was deleted in a server");
+      } else {
+        let error = new Error("Could not delete message in a server");
+        throw error;
+      }
     } catch (error) {
       console.log(error);
     }
@@ -261,6 +322,11 @@ export default function ConversationContextProvider({
     editMessageInServer(changedMessage)
   }
 
+  console.log("Messages: " , messages)
+  console.log("Conversations: " , conversations)
+  console.log( "Participation Events: " , participationEvents)
+  console.log("Users: " , users)
+
   return (
     <ConversationContext.Provider
       value={{
@@ -276,7 +342,10 @@ export default function ConversationContextProvider({
         updateMessage,
         userId,
         users,
-        setUsers
+        setUsers,
+        participationEvents,
+        setParticipationEvents,
+        addParticipationEvent
       }}
     >
       {children}

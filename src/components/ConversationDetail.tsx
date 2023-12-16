@@ -10,10 +10,12 @@ import {
   faTrashCan,
   faPen,
   faSquareCheck,
+  faArrowRightFromBracket
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function ConversationDetail() {
-  const { currentConversation, messages } = useContext(ConversationContext);
+  const { currentConversation, messages, participationEvents, users, addParticipationEvent, userId } = useContext(ConversationContext);
+  // const [participant, setParticipant] = useState()
 
   // useEffect(()=> {
   //   const messagesPopulatedWithNames = messages.map(m => m.user = users.find(u => u.id === m.user_id))
@@ -31,13 +33,42 @@ export default function ConversationDetail() {
   //   })
   // }, [messages])
 
+  let lastPartEventsUniqUserId = {} 
+  for( let i = 0; i < participationEvents.length; i++) {
+    let currentEvent = participationEvents[i]
+    let userIdInEvent = currentEvent.user_id
+      lastPartEventsUniqUserId[userIdInEvent] = currentEvent
+  }
 
+  let filteredEventsArray = Object.values(lastPartEventsUniqUserId)
+  console.log(filteredEventsArray)
 
   return (
     <div className="bg-blue-300 p-2 message-container">
       {currentConversation ? (
         <>
-          <div>{currentConversation.topic}</div>
+          <div>
+            <p className="inline mr-4">{currentConversation.topic}</p>
+            <button onClick={() => {
+                  addParticipationEvent(userId, currentConversation.id)
+                }}><FontAwesomeIcon icon={faArrowRightFromBracket} />
+                </button>
+          </div>
+          { 
+          filteredEventsArray.map((partEvent) =>
+                partEvent.participant === true ? users.map((user) => {
+                  if(partEvent.user_id === user.id) {
+                    return (
+                    <b>{user.name}</b>
+                    )
+                  }})
+                  :  users.map((user) => {
+                    if(partEvent.user_id === user.id) {
+                      return (
+                      <b>{user.name} left this conversation</b>
+                      )
+                    }}
+            ))}
           <div>
             {messages.map((message, index) => {
               return (
@@ -64,11 +95,11 @@ function Message({ message, isFirstInGroup }: {message: MessageI, isFirstInGroup
   const { updateMessage, deleteMessage, userId, users } = useContext(ConversationContext);
   const [isEditing, setIsEditing] = useState(false);
 
-  function unescape(string) {
+  function unescape(string: string) {
     const a = new DOMParser()
     const b = a.parseFromString(string,'text/html')
     const c = b.querySelector('html')
-    const d = c.textContent
+    const d = c?.textContent
     return d
   }
 
