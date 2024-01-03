@@ -25,7 +25,7 @@ export interface UserI {
 
 export interface ParticipationEventsI {
   id: string;
-  joined_at: string;
+  created_at: string;
   participant: boolean;
   user_id: string;
   conversation_id: string;

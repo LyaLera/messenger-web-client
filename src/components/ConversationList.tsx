@@ -12,7 +12,7 @@ export default function ConversationList() {
   const conversationsToDisplay = search ? filteredConversation : conversations
 
   return (
-    <div className=" bg-orange-300">
+    <div className="conv-list-container">
         <input type="text" 
         className="m-4 p-1"  
         placeholder="Search for conversation"
@@ -30,8 +30,8 @@ export default function ConversationList() {
             }}
             className={
               conversation.id === selectedConversationId
-                ? "bg-orange-500 p-2"
-                : "bg-orange-300 p-2"
+                ? "bg-neutral-500 p-2 "
+                 : "p-2"
             }
           >
             {conversation.topic}

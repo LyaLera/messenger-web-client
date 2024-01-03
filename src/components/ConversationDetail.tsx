@@ -1,9 +1,5 @@
-
-
-
-
 import { useContext, useState } from "react";
-import { ConversationContext, MessageI } from "../contexts/ConversationContext";
+import { ConversationContext, MessageI, ParticipationEventsI } from "../contexts/ConversationContext";
 import ConversationInputForm from "./ConversationInputForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -15,7 +11,6 @@ import {
 
 export default function ConversationDetail() {
   const { currentConversation, messages, participationEvents, users, addParticipationEvent, userId } = useContext(ConversationContext);
-  // const [participant, setParticipant] = useState()
 
   // useEffect(()=> {
   //   const messagesPopulatedWithNames = messages.map(m => m.user = users.find(u => u.id === m.user_id))
@@ -33,7 +28,7 @@ export default function ConversationDetail() {
   //   })
   // }, [messages])
 
-  let lastPartEventsUniqUserId = {} 
+  let lastPartEventsUniqUserId: Record<string, ParticipationEventsI> = {} 
   for( let i = 0; i < participationEvents.length; i++) {
     let currentEvent = participationEvents[i]
     let userIdInEvent = currentEvent.user_id
@@ -41,10 +36,19 @@ export default function ConversationDetail() {
   }
 
   let filteredEventsArray = Object.values(lastPartEventsUniqUserId)
-  console.log(filteredEventsArray)
+
+const messagesArray = [...messages];
+const eventsArray = [...filteredEventsArray];
+
+// Sort messages and events based on the created_at property
+const allEvents = [...messagesArray, ...eventsArray]
+allEvents.sort((a, b) => {
+  return Number(a.created_at) - Number(b.created_at);
+});
+
 
   return (
-    <div className="bg-blue-300 p-2 message-container">
+    <div className="p-2 message-container">
       {currentConversation ? (
         <>
           <div>
@@ -54,32 +58,22 @@ export default function ConversationDetail() {
                 }}><FontAwesomeIcon icon={faArrowRightFromBracket} />
                 </button>
           </div>
-          { 
-          filteredEventsArray.map((partEvent) =>
-                partEvent.participant === true ? users.map((user) => {
+            {filteredEventsArray.map((partEvent) => 
+                partEvent.participant === true && users.map((user) => {
                   if(partEvent.user_id === user.id) {
                     return (
-                    <b>{user.name}</b>
+                    <ul>
+                      <li><b>{user.name}</b></li>
+                    </ul>
                     )
                   }})
-                  :  users.map((user) => {
-                    if(partEvent.user_id === user.id) {
-                      return (
-                      <b>{user.name} left this conversation</b>
-                      )
-                    }}
-            ))}
+            )}    
           <div>
-            {messages.map((message, index) => {
-              return (
-                <div key={message.id}>
-                  <Message
-                    message={message}
-                    isFirstInGroup={messages[index-1]?.user_id !== messages[index]?.user_id}
-                  />
-                </div>
-              );
-            })}
+            {allEvents.map((event, index) => (
+              <div key={event.id}>
+                <Message event={event as MessageI} isFirstInGroup={index === 0 || allEvents[index - 1].user_id !== event.user_id} />
+              </div>
+            ))}
           </div>
           <ConversationInputForm />
         </>
@@ -90,8 +84,7 @@ export default function ConversationDetail() {
   );
 }
 
-
-function Message({ message, isFirstInGroup }: {message: MessageI, isFirstInGroup: boolean}) {
+function Message({ event, isFirstInGroup }: {event: MessageI, isFirstInGroup: boolean}) {
   const { updateMessage, deleteMessage, userId, users } = useContext(ConversationContext);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -104,6 +97,11 @@ function Message({ message, isFirstInGroup }: {message: MessageI, isFirstInGroup
   }
 
   let messagesContent;
+
+  if ('content' in event) {
+    // It's a message
+    const message = event as MessageI;
+
   if (isEditing) {
     messagesContent = (
       <div key={message.id}>
@@ -129,11 +127,21 @@ function Message({ message, isFirstInGroup }: {message: MessageI, isFirstInGroup
     messagesContent = (
       <div key={message.id}>
         {unescape(message.content)}
-        <button onClick={() => {
+        <button 
+        onClick={() => {
           if(message.user_id === userId) {
             setIsEditing(true)};
         }}>
           <FontAwesomeIcon icon={faPen} />
+        </button>
+        <button 
+          className="my-2"
+          onClick={() => {
+            if(message.user_id === userId) {
+            deleteMessage(message.id);}
+          }}
+        >
+          <FontAwesomeIcon icon={faTrashCan} />
         </button>
       </div>
     );
@@ -149,18 +157,21 @@ function Message({ message, isFirstInGroup }: {message: MessageI, isFirstInGroup
   return (
         <div key={message.id}>
           <div>
-            <p>{isFirstInGroup?userName:""}{messagesContent}</p>
+            <p>{isFirstInGroup?<b>{userName}</b>:""}{messagesContent}</p>
           </div>
-        
-        <button
-          className="my-2"
-          onClick={() => {
-            if(message.user_id === userId) {
-            deleteMessage(message.id);}
-          }}
-        >
-          <FontAwesomeIcon icon={faTrashCan} />
-        </button>
       </div>
     )
+} else {
+  // It's a participation event
+  const eventParticipation = event as ParticipationEventsI;
+  const user = users.find((u) => u.id === eventParticipation.user_id);
+
+  if (eventParticipation.participant === false) {
+    return (
+      <div key={eventParticipation.id}>
+        <p><b>{user?.name} left the conversation</b></p>
+      </div>
+    );
+  } 
+}
 }

@@ -8,16 +8,43 @@
     min-height: 100vh;
 }
 
+.navbar {
+    background-color: rgb(29, 29, 29);
+    color: rgb(220, 218, 218);
+    padding-top: 20px;
+    text-align: center;
+    border: white solid 5px;
+    border-radius: 10px;
+}
+
 .conversation-container {
     display: grid;
     grid-template-columns: 1fr 3fr;
+    
+}
+
+.conv-list-container {
+    border: white solid 5px;
+    background-color: rgb(174, 173, 173);
+    border-radius: 10px;
 }
 
 .message-container {
     display: grid;
     grid-template-rows: 30px auto 40px;
+    border: white solid 5px;
+    background-color: rgb(174, 173, 173);
+    border-radius: 10px;
 }
 
 .message-content {
     display: inline;
+}
+
+button {
+    margin: 10px;
+}
+
+input {
+    border-radius: 10px;
 }
