@@ -126,7 +126,7 @@ export default function ConversationContextProvider({
   const fetchConversations = async () => {
     try {
       let response = await fetch(
-        `${import.meta.env.SERVER_MESSENGER}/conversations`
+        `${import.meta.env.VITE_SERVER_MESSENGER}/conversations`
       );
       let data = await response.json();
       let conversationsFromServer = data;
@@ -143,7 +143,7 @@ export default function ConversationContextProvider({
   const fetchUsers = async () => {
     try {
       let response = await fetch(
-        `${import.meta.env.SERVER_MESSENGER}/users`)
+        `${import.meta.env.VITE_SERVER_MESSENGER}/users`)
       let data = await response.json();
       let usersFromServer = data;
       setUsers(usersFromServer);
@@ -159,7 +159,7 @@ export default function ConversationContextProvider({
   const fetchParticipationEvents = async (conversation_id: string | undefined) => {
     try {
       let response = await fetch(
-        `${import.meta.env.SERVER_MESSENGER}/participation_events/conversation/` + conversation_id);
+        `${import.meta.env.VITE_SERVER_MESSENGER}/participation_events/conversation/` + conversation_id);
       let data = await response.json();
       let participationEventsFromServer = data;
       setParticipationEvents(participationEventsFromServer);
@@ -171,7 +171,7 @@ export default function ConversationContextProvider({
   const fetchMessages = async (conversation_id: string | undefined) => {
     try {
       let response = await fetch(
-        `${import.meta.env.SERVER_MESSENGER}/messages/conversation/` + conversation_id
+        `${import.meta.env.VITE_SERVER_MESSENGER}/messages/conversation/` + conversation_id
       );
       let data = await response.json();
       let messagesFromServer = data;
@@ -184,7 +184,7 @@ export default function ConversationContextProvider({
   const postMessage = async (newMessage : {content: string, user_id: string, conversation_id: string}) => {
     try {
       let response = await fetch(
-        `${import.meta.env.SERVER_MESSENGER}/messages`,
+        `${import.meta.env.VITE_SERVER_MESSENGER}/messages`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -225,7 +225,7 @@ export default function ConversationContextProvider({
   const postParticipationEvent = async (newPartEvent : {participant: boolean}) => {
     try {
       let response = await fetch(
-        `${import.meta.env.SERVER_MESSENGER}/participation_events`,
+        `${import.meta.env.VITE_SERVER_MESSENGER}/participation_events`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -264,7 +264,7 @@ export default function ConversationContextProvider({
   const deleteMessageInServer = async (deleteId: string) => {
     try {
       let response = await fetch(
-        `${import.meta.env.SERVER_MESSENGER}/messages/` + deleteId,
+        `${import.meta.env.VITE_SERVER_MESSENGER}/messages/` + deleteId,
         {
           method: "DELETE",
         }
@@ -292,7 +292,7 @@ export default function ConversationContextProvider({
   const editMessageInServer = async (changedMessage: MessageI ) => {
     try {
       let response = await fetch(
-      `${import.meta.env.SERVER_MESSENGER}/messages/` + changedMessage.id,
+      `${import.meta.env.VITE_SERVER_MESSENGER}/messages/` + changedMessage.id,
       {
         method: "PUT",
         headers: {
