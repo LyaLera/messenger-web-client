@@ -130,6 +130,7 @@ export default function ConversationContextProvider({
       );
       let data = await response.json();
       let conversationsFromServer = data;
+      console.log(conversationsFromServer)
       setConversations(conversationsFromServer);
     } catch (error) {
       console.log(error);
@@ -159,7 +160,7 @@ export default function ConversationContextProvider({
   const fetchParticipationEvents = async (conversation_id: string | undefined) => {
     try {
       let response = await fetch(
-        `${import.meta.env.VITE_SERVER_MESSENGER}/participation_events/conversation/` + conversation_id);
+        `${import.meta.env.VITE_SERVER_MESSENGER}/conversation/${conversation_id}`);
       let data = await response.json();
       let participationEventsFromServer = data;
       setParticipationEvents(participationEventsFromServer);
@@ -171,7 +172,7 @@ export default function ConversationContextProvider({
   const fetchMessages = async (conversation_id: string | undefined) => {
     try {
       let response = await fetch(
-        `${import.meta.env.VITE_SERVER_MESSENGER}/messages/conversation/` + conversation_id
+        `${import.meta.env.VITE_SERVER_MESSENGER}/messages/conversation/${conversation_id}`
       );
       let data = await response.json();
       let messagesFromServer = data;
@@ -264,7 +265,7 @@ export default function ConversationContextProvider({
   const deleteMessageInServer = async (deleteId: string) => {
     try {
       let response = await fetch(
-        `${import.meta.env.VITE_SERVER_MESSENGER}/messages/` + deleteId,
+        `${import.meta.env.VITE_SERVER_MESSENGER}/messages/${deleteId}`,
         {
           method: "DELETE",
         }
@@ -292,7 +293,7 @@ export default function ConversationContextProvider({
   const editMessageInServer = async (changedMessage: MessageI ) => {
     try {
       let response = await fetch(
-      `${import.meta.env.VITE_SERVER_MESSENGER}/messages/` + changedMessage.id,
+        `${import.meta.env.VITE_SERVER_MESSENGER}/messages/${changedMessage.id}`,
       {
         method: "PUT",
         headers: {
