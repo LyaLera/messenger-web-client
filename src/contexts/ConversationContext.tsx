@@ -90,17 +90,30 @@ export default function ConversationContextProvider({
     
     // when the page loads, we want to read the URL and get conversationId, if there is one
     useEffect(()=>{
+      fetchConversations();
+      fetchUsers();
+
       if(!selectedConversationId) {
         const fullUrl = window.location.href;
-       const id = fullUrl.split("/").pop();
-       setSelectedConversationId(id);
+        const id = fullUrl.split("/").pop();
+        if(id && id.length) {
+          setSelectedConversationId(id);
+        }
      }
     },[])
+  
 
     useEffect(() => {
       // when the user changes the selectedConversationId, we want update id in the URL
+
+      if(!selectedConversationId) {
+        setMessages([])
+        setCurrentConversation(null)
+        history.pushState(null, "", "/conversations/");
+        return
+      } 
       history.pushState(null, "", "/conversations/" + selectedConversationId);
-      if(selectedConversationId !== undefined) {
+      if(conversations.length > 0) {
         // when the user changes the selectedConversationId, we want request messages for that conversation
         fetchMessages(selectedConversationId)
         fetchParticipationEvents(selectedConversationId)
@@ -114,9 +127,6 @@ export default function ConversationContextProvider({
           setCurrentConversation(foundConversation);
         }
 
-      } else {
-        setMessages([])
-        setCurrentConversation(null)
       } 
       // without "waiting" for conversations http response to arrive, we have created a "race condition"
       // where we try to select the "currentConversation" before we have received *any* conversations
@@ -127,19 +137,15 @@ export default function ConversationContextProvider({
     try {
       let response = await fetch(
         `${import.meta.env.VITE_SERVER_MESSENGER}/conversations`
-      );
+      )
       let data = await response.json();
       let conversationsFromServer = data;
-      console.log(conversationsFromServer)
       setConversations(conversationsFromServer);
     } catch (error) {
       console.log(error);
     }
   };
 
-  useEffect(() => {
-    fetchConversations();
-  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -153,14 +159,16 @@ export default function ConversationContextProvider({
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+
 
   const fetchParticipationEvents = async (conversation_id: string | undefined) => {
+    console.log("XXXX",conversation_id)
+    if(typeof conversation_id == undefined) {
+      return
+    }
     try {
       let response = await fetch(
-        `${import.meta.env.VITE_SERVER_MESSENGER}/conversation/${conversation_id}`);
+        `${import.meta.env.VITE_SERVER_MESSENGER}/participation_events/conversation/${conversation_id}`);
       let data = await response.json();
       let participationEventsFromServer = data;
       setParticipationEvents(participationEventsFromServer);
